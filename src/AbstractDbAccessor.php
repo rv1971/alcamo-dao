@@ -3,9 +3,15 @@
 namespace alcamo\dao;
 
 /**
- * @brief Wrapper for a PDO with some convenience
+ * @namespace alcamo\dao
+ *
+ * @brief Simple database access classes
  *
  * @todo Write unit tests
+ */
+
+/**
+ * @brief Wrapper for a PDO with some convenience
  *
  * @date Last reviewed 2021-06-14
  */
