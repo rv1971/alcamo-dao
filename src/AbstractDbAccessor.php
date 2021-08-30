@@ -1,7 +1,5 @@
 <?php
 
-namespace alcamo\dao;
-
 /**
  * @namespace alcamo\dao
  *
@@ -9,6 +7,7 @@ namespace alcamo\dao;
  *
  * @todo Write unit tests
  */
+namespace alcamo\dao;
 
 /**
  * @brief Wrapper for a PDO with some convenience
