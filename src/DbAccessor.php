@@ -7,6 +7,7 @@
  *
  * @todo Write unit tests
  */
+
 namespace alcamo\dao;
 
 /**
