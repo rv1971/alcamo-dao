@@ -12,17 +12,20 @@ namespace alcamo\dao;
 /**
  * @brief Wrapper for a PDO with some convenience
  */
-class AbstractDbAccessor
+class DbAccessor
 {
     /// Class to return when fetching records
-    public const RECORD_CLASS = StdClass::class;
+    public const RECORD_CLASS = \StdClass::class;
 
     protected $pdo_;
 
     /**
      * @param $connection One of:
      * - PDO object
-     * - array of $arguments for PDO::__construct
+     * - DbAccessor object
+     * - associative array with required key `dsn` and optional keys
+     * `username`, `password` and `options`
+     * - numerically indexed array of $arguments for PDO::__construct
      * - DSN string
      */
     public function __construct($connection)
@@ -30,6 +33,19 @@ class AbstractDbAccessor
         switch (true) {
             case $connection instanceof \PDO:
                 $this->pdo_ = $connection;
+                break;
+
+            case $connection instanceof self:
+                $this->pdo_ = $connection->pdo_;
+                break;
+
+            case is_array($connection) && isset($connection['dsn']):
+                $this->pdo_ = new \PDO(
+                    $connection['dsn'],
+                    $connection['username'] ?? null,
+                    $connection['password'] ?? null,
+                    $connection['options'] ?? null
+                );
                 break;
 
             case is_array($connection):
