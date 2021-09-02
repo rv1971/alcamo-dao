@@ -9,7 +9,7 @@ namespace alcamo\dao;
  *
  * @date Last reviewed 2021-06-14
  */
-class TableAccessor extends AbstractDbAccessor implements \IteratorAggregate
+class TableAccessor extends DbAccessor implements \IteratorAggregate
 {
     /// Default ORDER BY clause for iterator
     public const DEFAULT_ORDER_BY = '1, 2, 3';

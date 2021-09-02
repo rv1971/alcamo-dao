@@ -11,10 +11,8 @@ namespace alcamo\dao;
 
 /**
  * @brief Wrapper for a PDO with some convenience
- *
- * @date Last reviewed 2021-06-14
  */
-abstract class AbstractDbAccessor
+class AbstractDbAccessor
 {
     /// Class to return when fetching records
     public const RECORD_CLASS = StdClass::class;
