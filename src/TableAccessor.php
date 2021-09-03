@@ -4,15 +4,11 @@ namespace alcamo\dao;
 
 /**
  * @brief Table accessor with iterator over all table records
- *
- * @todo Write unit tests
- *
- * @date Last reviewed 2021-06-14
  */
 class TableAccessor extends DbAccessor implements \IteratorAggregate
 {
-    /// Default ORDER BY clause for iterator
-    public const DEFAULT_ORDER_BY = '1, 2, 3';
+    /// SELECT statement for iterator
+    public const SELECT_STMT = 'SELECT * FROM %s ORDER BY 1, 2, 3';
 
     protected $tableName_;
 
@@ -31,10 +27,7 @@ class TableAccessor extends DbAccessor implements \IteratorAggregate
     /// Return iterator over all table records
     public function getIterator(): \Traversable
     {
-        $stmt = $this->prepare(
-            "SELECT * FROM $this->tableName_ ORDER BY "
-            . static::DEFAULT_ORDER_BY
-        );
+        $stmt = $this->prepare(sprintf(static::SELECT_STMT, $this->tableName_));
 
         $stmt->execute();
 
