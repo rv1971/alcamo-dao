@@ -4,8 +4,6 @@
  * @namespace alcamo\dao
  *
  * @brief Simple database access classes
- *
- * @todo Write unit tests
  */
 
 namespace alcamo\dao;
