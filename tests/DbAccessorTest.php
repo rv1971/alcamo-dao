@@ -30,13 +30,7 @@ class DbAccessorTest extends TestCase
     {
         $accessor = new MyDbAccessor($connection);
 
-        $this->assertTrue(
-            $accessor->prepare(static::CREATE_TABLE)->execute()
-        );
-
-        $this->assertTrue(
-            $accessor->prepare(static::INSERT)->execute()
-        );
+        $accessor->executeScript([ static::CREATE_TABLE, static::INSERT ]);
 
         $stmt = $accessor->prepare(static::SELECT);
 

@@ -78,4 +78,12 @@ class DbAccessor
 
         return $stmt;
     }
+
+    /// Execute a sequence of SQL statements
+    public function executeScript(iterable $stmts): void
+    {
+        foreach ($stmts as $stmt) {
+            $this->prepare($stmt)->execute();
+        }
+    }
 }
