@@ -24,7 +24,7 @@ class DbAccessor
      * - DbAccessor object
      * - associative array with required key `dsn` and optional keys
      * `username`, `password` and `options`
-     * - numerically indexed array of $arguments for PDO::__construct
+     * - numerically indexed array of arguments for PDO::__construct
      * - DSN string
      */
     public function __construct($connection)
