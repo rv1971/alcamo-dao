@@ -55,8 +55,14 @@ class DbAccessor
                 $this->pdo_ = new \PDO($connection);
         }
 
-        /** Always throw exceptions on database errors */
+        /** Always throw exceptions on database errors. */
         $this->pdo_->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+
+        /** Create custom Statement objects. */
+        $this->pdo_->setAttribute(
+            \PDO::ATTR_STATEMENT_CLASS,
+            [ Statement::class ]
+        );
     }
 
     /**

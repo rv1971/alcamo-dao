@@ -27,10 +27,8 @@ class TableAccessor extends DbAccessor implements \IteratorAggregate
     /// Return iterator over all table records
     public function getIterator(): \Traversable
     {
-        $stmt = $this->prepare(sprintf(static::SELECT_STMT, $this->tableName_));
-
-        $stmt->execute();
-
-        return $stmt;
+        return $this
+            ->prepare(sprintf(static::SELECT_STMT, $this->tableName_))
+            ->executeAndReturnSelf();
     }
 }
