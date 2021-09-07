@@ -40,9 +40,7 @@ class DbAccessorTest extends TestCase
 
         $expectedResult->msg = 'Hello, world!';
 
-        foreach ($stmt as $record) {
-            $this->assertEquals($expectedResult, $record);
-        }
+        $this->assertEquals($expectedResult, $stmt->fetch());
     }
 
     public function basicsProvider()

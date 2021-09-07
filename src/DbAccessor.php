@@ -63,6 +63,12 @@ class DbAccessor
             \PDO::ATTR_STATEMENT_CLASS,
             [ Statement::class ]
         );
+
+        /** Fetch class objects by default. */
+        $this->pdo_->setAttribute(
+            \PDO::ATTR_DEFAULT_FETCH_MODE,
+            \PDO::FETCH_CLASS
+        );
     }
 
     /**
