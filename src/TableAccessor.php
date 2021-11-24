@@ -30,7 +30,7 @@ class TableAccessor extends DbAccessor implements \IteratorAggregate
         return $this->prepare($sql)->executeAndReturnSelf($params);
     }
 
-    /// Use query() to iterator over all records
+    /// Use query() to iterate over all records
     public function getIterator(): \Traversable
     {
         return $this->query(sprintf(static::SELECT_STMT, $this->tableName_));
