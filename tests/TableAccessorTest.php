@@ -37,6 +37,8 @@ class TableAccessorTest extends TestCase
             $accessor->prepare(static::CREATE_TABLE)->execute()
         );
 
+        $this->assertSame(0, count($accessor));
+
         foreach (static::INSERTS as $insert) {
             $this->assertTrue($accessor->prepare($insert)->execute());
         }
@@ -46,5 +48,7 @@ class TableAccessorTest extends TestCase
         foreach ($accessor as $record) {
             $this->assertEquals((object)static::EXPECTED[$i++], $record);
         }
+
+        $this->assertSame(count(static::EXPECTED), count($accessor));
     }
 }
