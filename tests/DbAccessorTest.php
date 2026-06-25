@@ -7,17 +7,19 @@ use PHPUnit\Framework\TestCase;
 class DbAccessorTest extends TestCase
 {
     public const CREATION_SCRIPT = [
-        'CREATE TABLE foo(msg TEXT)',
-        "INSERT INTO foo VALUES('Hello, world!')"
+        'CREATE TABLE /*_*/foo(msg TEXT)',
+        "INSERT INTO /*_*/foo VALUES('Hello, world!')"
     ];
 
-    public const SELECT_STMT = "SELECT * FROM foo";
+    public const SELECT_STMT = "SELECT * FROM my_foo";
 
     public const DSN = 'sqlite::memory:';
 
     public function testBasics()
     {
-        $accessor = DbAccessor::newFromProps([ 'dsn' => static::DSN ]);
+        $accessor = DbAccessor::newFromProps(
+            [ 'dsn' => static::DSN, 'tablePrefix' => 'my_' ]
+        );
 
         $accessor->executeScript(static::CREATION_SCRIPT);
 

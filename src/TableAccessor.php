@@ -25,7 +25,7 @@ class TableAccessor implements \Countable, \IteratorAggregate
      * @brief Create from named properties
      *
      * @param $props array|object Properties with the names as the parameters
-     * of alcamo::dao::DbAccessor::newFromDsn() plus a `tableName`property.
+     * of alcamo::dao::DbAccessor::newFromDsn() plus a `tableName` property.
      */
     public static function newFromProps($props): self
     {

@@ -33,16 +33,21 @@ class DbAccessor
         string $dsn,
         ?string $username = null,
         ?string $password = null,
-        ?array $options = null
+        ?array $options = null,
+        ?string $tablePrefix = null
     ): self {
-        return new static(new \PDO($dsn, $username, $password, $options));
+        return new static(
+            new \PDO($dsn, $username, $password, $options),
+            $tablePrefix
+        );
     }
 
     /**
      * @brief Create from named properties
      *
      * @param $props array|object Properties with the names as the parameters
-     * of alcamo::dao::DbAccessor::newFromDsn().
+     * of alcamo::dao::DbAccessor::newFromDsn() plus optionally a
+     * `tablePrefix` property.
      */
     public static function newFromProps($props): self
     {
@@ -52,24 +57,40 @@ class DbAccessor
             $props->dsn ?? null,
             $props->username ?? null,
             $props->password ?? null,
-            $props->options ?? null
+            $props->options ?? null,
+            $props->tablePrefix ?? null
         );
     }
 
-    private $pdo_;
+    protected $pdo_;         ///< PDO object
+    protected $tablePrefix_; ///< ?string
 
-    public function __construct(\PDO $pdo)
+    /**
+     * @param $pdo PDO object.
+     *
+     * @param $tablePrefix prefix to prepend to all table names. This allows
+     * to access tables in a specific schema and/or to use a table naming
+     * convention based on prefixes.
+     */
+    public function __construct(\PDO $pdo, ?string $tablePrefix = null)
     {
         $this->pdo_ = $pdo;
 
         foreach (static::ATTRIBUTES as $attribute => $value) {
             $this->pdo_->setAttribute($attribute, $value);
         }
+
+        $this->tablePrefix_ = $tablePrefix;
     }
 
     public function getPdo(): \PDO
     {
         return $this->pdo_;
+    }
+
+    public function getTablePrefix(): ?string
+    {
+        return $this->tablePrefix_;
     }
 
     /**
@@ -83,12 +104,17 @@ class DbAccessor
      * @param $fetchClass Name of class used to fetch records. [default
      * alcamo::dao::DbAccessor::FETCH_CLASS]
      */
+    /// @note All occurrences of `/*_*/` in $stmt are *verbatim* replaced by
+    /// the table prefix, if any.
     public function prepare(
         string $stmt,
         ?array $options = null,
         ?string $fetchClass = null
     ): \PDOStatement {
-        $stmt = $this->pdo_->prepare($stmt, $options ?? []);
+        $stmt = $this->pdo_->prepare(
+            str_replace('/*_*/', $this->tablePrefix_, $stmt),
+            $options ?? []
+        );
 
         /** Return fetched records as objects of class RECORD_CLASS. */
         $stmt->setFetchMode(
