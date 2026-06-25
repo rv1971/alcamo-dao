@@ -96,7 +96,7 @@ class DbAccessor
     /**
      * @brief Prepare an SQL statement
      *
-     * @param $stmt SQL statement string
+     * @param $stmtSql SQL statement string
      *
      * @param $options See
      * [PDO::prepare()](https://www.php.net/manual/en/pdo.prepare) $options
@@ -104,15 +104,27 @@ class DbAccessor
      * @param $fetchClass Name of class used to fetch records. [default
      * alcamo::dao::DbAccessor::FETCH_CLASS]
      */
-    /// @note All occurrences of `/*_*/` in $stmt are *verbatim* replaced by
+    /// @note All occurrences of `/*_*/` in $stmtSql are *verbatim* replaced by
     /// the table prefix, if any.
     public function prepare(
-        string $stmt,
+        string $stmtSql,
         ?array $options = null,
         ?string $fetchClass = null
-    ): \PDOStatement {
+    ): ?\PDOStatement {
+        /** Any comments starting with `--` at the beginning of a line are
+         *  removed. If the result is an empty string, return null. A
+         *  semicolon at the end of a statement, if any, is removed. */
+        $stmtSql = rtrim(
+            trim(preg_replace('/\n--[^\n]*\n/', "\n", "\n$stmtSql\n")),
+            ';'
+        );
+
+        if ($stmtSql == '') {
+            return null;
+        }
+
         $stmt = $this->pdo_->prepare(
-            str_replace('/*_*/', $this->tablePrefix_, $stmt),
+            str_replace('/*_*/', $this->tablePrefix_, $stmtSql),
             $options ?? []
         );
 
@@ -126,10 +138,26 @@ class DbAccessor
     }
 
     /// Execute a sequence of SQL statements as strings
-    public function executeScript(iterable $stmts): void
+    public function executeScript(iterable $stmtSqls): void
     {
-        foreach ($stmts as $stmt) {
-            $this->prepare($stmt)->execute();
+        foreach ($stmtSqls as $stmtSql) {
+            $stmt = $this->prepare($stmtSql);
+
+            if (isset($stmt)) {
+                $stmt->execute();
+            }
         }
+    }
+
+    /**
+     * @brief Execute an SQL file
+     *
+     * @warning The parser is extremely trivial and simply assumes that the
+     * statements are exactly the chunks of text that terminate in semicolon
+     * and linefeed.
+     */
+    public function executeSqlFile(string $pathname): void
+    {
+        $this->executeScript(explode(";\n", file_get_contents($pathname)));
     }
 }

@@ -6,11 +6,6 @@ use PHPUnit\Framework\TestCase;
 
 class DbAccessorTest extends TestCase
 {
-    public const CREATION_SCRIPT = [
-        'CREATE TABLE /*_*/foo(msg TEXT)',
-        "INSERT INTO /*_*/foo VALUES('Hello, world!')"
-    ];
-
     public const SELECT_STMT = "SELECT * FROM my_foo";
 
     public const DSN = 'sqlite::memory:';
@@ -21,7 +16,7 @@ class DbAccessorTest extends TestCase
             [ 'dsn' => static::DSN, 'tablePrefix' => 'my_' ]
         );
 
-        $accessor->executeScript(static::CREATION_SCRIPT);
+        $accessor->executeSqlFile(__DIR__ . DIRECTORY_SEPARATOR . 'create.sql');
 
         $stmt = $accessor->prepare(static::SELECT_STMT);
 
