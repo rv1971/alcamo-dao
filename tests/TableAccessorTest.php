@@ -10,9 +10,10 @@ class MyClass extends \StdClass
 
 class MyTableAccessor extends TableAccessor
 {
-    public const RECORD_CLASS = MyClass::class;
+    public const FETCH_CLASS = MyClass::class;
 }
 
+/* This also tests class Statement. */
 class TableAccessorTest extends TestCase
 {
     public const CREATE_TABLE =
@@ -38,7 +39,9 @@ class TableAccessorTest extends TestCase
 
     public function testBasics()
     {
-        $accessor = new TableAccessor(static::DSN, 'foo');
+        $accessor = MyTableAccessor::newFromProps(
+            [ 'dsn' => static::DSN, 'tableName' => 'foo' ]
+        );
 
         $this->assertSame('foo', $accessor->getTableName());
 
@@ -48,16 +51,18 @@ class TableAccessorTest extends TestCase
 
         $this->assertSame(0, count($accessor));
 
-        foreach (static::INSERTS as $insert) {
-            $this->assertTrue($accessor->prepare($insert)->execute());
-        }
+        $accessor->getDbAccessor()->executeScript(static::INSERTS);
 
         $i = 0;
 
-        foreach ($accessor as $record) {
-            $this->assertEquals((object)static::EXPECTED[$i++], $record);
-        }
-
         $this->assertSame(count(static::EXPECTED), count($accessor));
+
+        foreach ($accessor as $record) {
+            $this->assertInstanceof(MyClass::class, $record);
+            $this->assertEquals(
+                static::EXPECTED[$i++],
+                get_object_vars($record)
+            );
+        }
     }
 }

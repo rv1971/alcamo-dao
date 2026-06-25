@@ -11,6 +11,9 @@ namespace alcamo\dao;
 /**
  * @brief Wrapper for a PDO with some convenience
  *
+ * @warning No sanitization takes place on method arguments. The caller must
+ * have done sanitization before, if necessary.
+ *
  * @date last reviewed 2026-06-25
  */
 class DbAccessor
@@ -38,7 +41,7 @@ class DbAccessor
     /**
      * @brief Create from named properties
      *
-     * @param $props array|object properties with the names as the parameters
+     * @param $props array|object Properties with the names as the parameters
      * of alcamo::dao::DbAccessor::newFromDsn().
      */
     public static function newFromProps($props): self

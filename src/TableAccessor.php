@@ -4,6 +4,11 @@ namespace alcamo\dao;
 
 /**
  * @brief Table accessor with iterator over all table records
+ *
+ * @warning No sanitization takes place on method arguments. The caller must
+ * have done sanitization before, if necessary.
+ *
+ * @date last reviewed 2026-06-25
  */
 class TableAccessor implements \Countable, \IteratorAggregate
 {
@@ -15,6 +20,19 @@ class TableAccessor implements \Countable, \IteratorAggregate
 
     /// SELECT statement for getIterator()
     public const SELECT_STMT = 'SELECT * FROM %s ORDER BY 1, 2, 3 LIMIT 100';
+
+    /**
+     * @brief Create from named properties
+     *
+     * @param $props array|object Properties with the names as the parameters
+     * of alcamo::dao::DbAccessor::newFromDsn() plus a `tableName`property.
+     */
+    public static function newFromProps($props): self
+    {
+        $props = (object)$props;
+
+        return new static(DbAccessor::newFromProps($props), $props->tableName);
+    }
 
     protected $dbAccessor_;
     protected $tableName_;
