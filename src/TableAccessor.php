@@ -16,10 +16,11 @@ class TableAccessor implements \Countable, \IteratorAggregate
     public const FETCH_CLASS = \StdClass::class;
 
     // SELECT statement for count()
-    public const COUNT_STMT = 'SELECT COUNT(*) FROM %s';
+    public const COUNT_STMT = 'SELECT COUNT(*) FROM /*_*/%s';
 
     /// SELECT statement for getIterator()
-    public const SELECT_STMT = 'SELECT * FROM %s ORDER BY 1, 2, 3 LIMIT 100';
+    public const SELECT_STMT =
+        'SELECT * FROM /*_*/%s ORDER BY 1, 2, 3 LIMIT 100';
 
     /**
      * @brief Create from named properties

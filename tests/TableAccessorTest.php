@@ -17,14 +17,14 @@ class MyTableAccessor extends TableAccessor
 class TableAccessorTest extends TestCase
 {
     public const CREATE_TABLE =
-        'CREATE TABLE foo(bar INTEGER, baz INTEGER, qux INTEGER)';
+        'CREATE TABLE /*_*/foo(bar INTEGER, baz INTEGER, qux INTEGER)';
 
     public const INSERTS = [
-        "INSERT INTO foo VALUES(9, 9, 9)",
-        "INSERT INTO foo VALUES(8, 7, 6)",
-        "INSERT INTO foo VALUES(8, 6, 0)",
-        "INSERT INTO foo VALUES(8, 7, 5)",
-        "INSERT INTO foo VALUES(8, 6, 1)"
+        "INSERT INTO /*_*/foo VALUES(9, 9, 9)",
+        "INSERT INTO /*_*/foo VALUES(8, 7, 6)",
+        "INSERT INTO bar_foo VALUES(8, 6, 0);",
+        "INSERT INTO bar_foo VALUES(8, 7, 5);",
+        "INSERT INTO bar_foo VALUES(8, 6, 1)"
     ];
 
     public const EXPECTED = [
@@ -40,7 +40,11 @@ class TableAccessorTest extends TestCase
     public function testBasics()
     {
         $accessor = MyTableAccessor::newFromProps(
-            [ 'dsn' => static::DSN, 'tableName' => 'foo' ]
+            [
+                'dsn' => static::DSN,
+                'tableName' => 'foo',
+                'tablePrefix' => 'bar_'
+            ]
         );
 
         $this->assertSame('foo', $accessor->getTableName());
