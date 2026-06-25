@@ -4,59 +4,39 @@ namespace alcamo\dao;
 
 use PHPUnit\Framework\TestCase;
 
-class MyClass extends \StdClass
-{
-}
-
-class MyDbAccessor extends DbAccessor
-{
-    public const RECORD_CLASS = MyClass::class;
-}
-
 class DbAccessorTest extends TestCase
 {
-    public const CREATE_TABLE = 'CREATE TABLE foo(msg TEXT)';
+    public const CREATION_SCRIPT = [
+        'CREATE TABLE foo(msg TEXT)',
+        "INSERT INTO foo VALUES('Hello, world!')"
+    ];
 
-    public const INSERT = "INSERT INTO foo VALUES('Hello, world!')";
-
-    public const SELECT = "SELECT * FROM foo";
+    public const SELECT_STMT = "SELECT * FROM foo";
 
     public const DSN = 'sqlite::memory:';
 
-    /**
-     * @dataProvider basicsProvider
-     */
-    public function testBasics($connection)
+    public function testBasics()
     {
-        $accessor = new MyDbAccessor($connection);
+        $accessor = DbAccessor::newFromProps([ 'dsn' => static::DSN ]);
 
-        $accessor->executeScript([ static::CREATE_TABLE, static::INSERT ]);
+        $accessor->executeScript(static::CREATION_SCRIPT);
 
-        $stmt = $accessor->prepare(static::SELECT);
+        $stmt = $accessor->prepare(static::SELECT_STMT);
+
+        $this->assertInstanceof(Statement::class, $stmt);
 
         $this->assertTrue($stmt->execute());
 
-        $expectedResult = new MyClass();
+        $expectedResult = new \StdClass();
 
         $expectedResult->msg = 'Hello, world!';
 
         $this->assertEquals($expectedResult, $stmt->fetch());
     }
 
-    public function basicsProvider()
-    {
-        return [
-            'pdo' => [ new \PDO(static::DSN) ],
-            'dbaccessor' => [ new DbAccessor(static::DSN) ],
-            'assoc' => [ [ 'dsn' => static::DSN ] ],
-            'array' => [ [ static::DSN ] ],
-            'string' => [ static::DSN ],
-        ];
-    }
-
     public function testException()
     {
-        $accessor = new DbAccessor(static::DSN);
+        $accessor = DbAccessor::newFromDsn(static::DSN);
 
         $this->expectException(\PDOException::class);
         $this->expectExceptionMessage('HY000');

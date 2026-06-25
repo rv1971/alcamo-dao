@@ -10,65 +10,63 @@ namespace alcamo\dao;
 
 /**
  * @brief Wrapper for a PDO with some convenience
+ *
+ * @date last reviewed 2026-06-25
  */
 class DbAccessor
 {
-    /// Class to return when fetching records
-    public const RECORD_CLASS = \StdClass::class;
+    /// Attributes set in the constructor
+    public const ATTRIBUTES = [
+        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+        \PDO::ATTR_STATEMENT_CLASS => [ Statement::class ],
+        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_CLASS
+    ];
 
-    protected $pdo_;
+    /// Class to return when fetching records
+    public const FETCH_CLASS = \StdClass::class;
+
+    /// Create from parameters as in PDO::__construct()
+    public static function newFromDsn(
+        string $dsn,
+        ?string $username = null,
+        ?string $password = null,
+        ?array $options = null
+    ): self {
+        return new static(new \PDO($dsn, $username, $password, $options));
+    }
 
     /**
-     * @param $connection One of:
-     * - PDO object
-     * - DbAccessor object
-     * - associative array with required key `dsn` and optional keys
-     * `username`, `password` and `options`
-     * - numerically indexed array of arguments for PDO::__construct
-     * - DSN string
+     * @brief Create from named properties
+     *
+     * @param $props array|object properties with the names as the parameters
+     * of alcamo::dao::DbAccessor::newFromDsn().
      */
-    public function __construct($connection)
+    public static function newFromProps($props): self
     {
-        switch (true) {
-            case $connection instanceof \PDO:
-                $this->pdo_ = $connection;
-                break;
+        $props = (object)$props;
 
-            case $connection instanceof self:
-                $this->pdo_ = $connection->pdo_;
-                break;
+        return static::newFromDsn(
+            $props->dsn ?? null,
+            $props->username ?? null,
+            $props->password ?? null,
+            $props->options ?? null
+        );
+    }
 
-            case is_array($connection) && isset($connection['dsn']):
-                $this->pdo_ = new \PDO(
-                    $connection['dsn'],
-                    $connection['username'] ?? null,
-                    $connection['password'] ?? null,
-                    $connection['options'] ?? null
-                );
-                break;
+    private $pdo_;
 
-            case is_array($connection):
-                $this->pdo_ = new \PDO(...$connection);
-                break;
+    public function __construct(\PDO $pdo)
+    {
+        $this->pdo_ = $pdo;
 
-            default:
-                $this->pdo_ = new \PDO($connection);
+        foreach (static::ATTRIBUTES as $attribute => $value) {
+            $this->pdo_->setAttribute($attribute, $value);
         }
+    }
 
-        /** Always throw exceptions on database errors. */
-        $this->pdo_->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-
-        /** Create custom Statement objects. */
-        $this->pdo_->setAttribute(
-            \PDO::ATTR_STATEMENT_CLASS,
-            [ Statement::class ]
-        );
-
-        /** Fetch class objects by default. */
-        $this->pdo_->setAttribute(
-            \PDO::ATTR_DEFAULT_FETCH_MODE,
-            \PDO::FETCH_CLASS
-        );
+    public function getPdo(): \PDO
+    {
+        return $this->pdo_;
     }
 
     /**
@@ -78,20 +76,27 @@ class DbAccessor
      *
      * @param $options See
      * [PDO::prepare()](https://www.php.net/manual/en/pdo.prepare) $options
+     *
+     * @param $fetchClass Name of class used to fetch records. [default
+     * alcamo::dao::DbAccessor::FETCH_CLASS]
      */
     public function prepare(
         string $stmt,
-        ?array $options = null
+        ?array $options = null,
+        ?string $fetchClass = null
     ): \PDOStatement {
         $stmt = $this->pdo_->prepare($stmt, $options ?? []);
 
-        /** Return fetched records as objects of class @ref RECORD_CLASS. */
-        $stmt->setFetchMode(\PDO::FETCH_CLASS, static::RECORD_CLASS);
+        /** Return fetched records as objects of class RECORD_CLASS. */
+        $stmt->setFetchMode(
+            \PDO::FETCH_CLASS,
+            $fetchClass ?? static::FETCH_CLASS
+        );
 
         return $stmt;
     }
 
-    /// Execute a sequence of SQL statements
+    /// Execute a sequence of SQL statements as strings
     public function executeScript(iterable $stmts): void
     {
         foreach ($stmts as $stmt) {

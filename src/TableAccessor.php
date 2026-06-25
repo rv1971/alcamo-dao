@@ -5,26 +5,52 @@ namespace alcamo\dao;
 /**
  * @brief Table accessor with iterator over all table records
  */
-class TableAccessor extends DbAccessor implements \Countable, \IteratorAggregate
+class TableAccessor implements \Countable, \IteratorAggregate
 {
+    /// Class to return when fetching records
+    public const FETCH_CLASS = \StdClass::class;
+
     // SELECT statement for count()
     public const COUNT_STMT = 'SELECT COUNT(*) FROM %s';
 
     /// SELECT statement for getIterator()
     public const SELECT_STMT = 'SELECT * FROM %s ORDER BY 1, 2, 3 LIMIT 100';
 
+    protected $dbAccessor_;
     protected $tableName_;
 
-    public function __construct($connection, string $tableName)
+    public function __construct(DbAccessor $dbAccessor, string $tableName)
     {
-        parent::__construct($connection);
-
+        $this->dbAccessor_ = $dbAccessor;
         $this->tableName_ = $tableName;
+    }
+
+    public function getDbAccessor(): DbAccessor
+    {
+        return $this->dbAccessor_;
     }
 
     public function getTableName(): string
     {
         return $this->tableName_;
+    }
+
+    /**
+     * @brief Prepare an SQL statement
+     *
+     * @param $stmt SQL statement string
+     *
+     * @param $options See
+     * [PDO::prepare()](https://www.php.net/manual/en/pdo.prepare) $options
+     */
+    public function prepare(
+        string $stmt,
+        ?array $options = null
+    ): \PDOStatement {
+        $stmt = $this->dbAccessor_
+            ->prepare($stmt, $options, static::FETCH_CLASS);
+
+        return $stmt;
     }
 
     /// Execute $sql with parameters $params

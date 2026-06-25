@@ -4,6 +4,15 @@ namespace alcamo\dao;
 
 use PHPUnit\Framework\TestCase;
 
+class MyClass extends \StdClass
+{
+}
+
+class MyTableAccessor extends TableAccessor
+{
+    public const RECORD_CLASS = MyClass::class;
+}
+
 class TableAccessorTest extends TestCase
 {
     public const CREATE_TABLE =
