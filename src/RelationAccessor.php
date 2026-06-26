@@ -5,6 +5,10 @@ namespace alcamo\dao;
 /**
  * @brief Relation accessor with iterator over all relation records
  *
+ * Statements in the class constant STMT_MAP are available via getStmt(),
+ * caching the prepared statements for reuse. Derived classes may add any
+ * number of entries to STMT_MAP as needed.
+ *
  * @warning No sanitization takes place on method arguments. The caller must
  * have done sanitization before, if necessary.
  *
@@ -18,15 +22,11 @@ class RelationAccessor implements \Countable, \IteratorAggregate
     /// Class to return when fetching records
     public const FETCH_CLASS = \StdClass::class;
 
-    /// Map of statement IDs to SQL statements with options
+    /// Map of statement IDs to SQL statements with optional options
     public const STMT_MAP = [
         'count'  => [ 'SELECT COUNT(*) FROM /*_*/%s' ],
         'select' => [ 'SELECT * FROM /*_*/%s ORDER BY 1, 2, 3 LIMIT 100' ]
     ];
-
-    /// SELECT statement for getIterator()
-    public const SELECT_STMT =
-        'SELECT * FROM /*_*/%s ORDER BY 1, 2, 3 LIMIT 100';
 
     /**
      * @brief Create from named properties
