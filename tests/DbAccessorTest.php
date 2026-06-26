@@ -4,6 +4,12 @@ namespace alcamo\dao;
 
 use PHPUnit\Framework\TestCase;
 
+class MyInstaller extends AbstractFileBasedInstaller
+{
+    public const SCRIPT_DIR = __DIR__;
+}
+
+/* This also tests class AbstractFileBasedInstaller. */
 class DbAccessorTest extends TestCase
 {
     public const SELECT_STMT = "SELECT * FROM my_foo";
@@ -16,7 +22,7 @@ class DbAccessorTest extends TestCase
             [ 'dsn' => static::DSN, 'tablePrefix' => 'my_' ]
         );
 
-        $accessor->executeSqlFile(__DIR__ . DIRECTORY_SEPARATOR . 'create.sql');
+        (new MyInstaller($accessor))->install();
 
         $stmt = $accessor->prepare(static::SELECT_STMT);
 
