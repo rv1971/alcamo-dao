@@ -10,6 +10,8 @@ class MyClass extends \StdClass
 
 class MyRelationAccessor extends RelationAccessor
 {
+    public const RELATION_NAME = 'foo';
+
     public const FETCH_CLASS = MyClass::class;
 }
 
@@ -42,8 +44,7 @@ class RelationAccessorTest extends TestCase
         $accessor = MyRelationAccessor::newFromProps(
             [
                 'dsn' => static::DSN,
-                'namePrefix' => 'bar_',
-                'relationName' => 'foo'
+                'namePrefix' => 'bar_'
             ]
         );
 

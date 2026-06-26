@@ -12,6 +12,9 @@ namespace alcamo\dao;
  */
 class RelationAccessor implements \Countable, \IteratorAggregate
 {
+    /// Relation name when not explicitely given to the constructor
+    public const RELATION_NAME = null;
+
     /// Class to return when fetching records
     public const FETCH_CLASS = \StdClass::class;
 
@@ -32,17 +35,21 @@ class RelationAccessor implements \Countable, \IteratorAggregate
     {
         $props = (object)$props;
 
-        return
-            new static(DbAccessor::newFromProps($props), $props->relationName);
+        return new static(
+            DbAccessor::newFromProps($props),
+            $props->relationName ?? null
+        );
     }
 
     protected $dbAccessor_;
     protected $relationName_;
 
-    public function __construct(DbAccessor $dbAccessor, string $relationName)
-    {
+    public function __construct(
+        DbAccessor $dbAccessor,
+        ?string $relationName = null
+    ) {
         $this->dbAccessor_ = $dbAccessor;
-        $this->relationName_ = $relationName;
+        $this->relationName_ = $relationName ?? static::RELATION_NAME;
     }
 
     public function getDbAccessor(): DbAccessor
