@@ -2,6 +2,8 @@
 
 namespace alcamo\dao;
 
+use alcamo\exception\Unsupported;
+
 /**
  * @brief Simple installer that executes a list of SQL files
  *
@@ -12,8 +14,12 @@ abstract class AbstractFileBasedInstaller implements InstallerInterface
     /// Directory where installation scripts are stored
     public const SCRIPT_DIR = null;
 
-    /// List of scripts to execute
-    public const SCRIPT_FILES = [ 'install.sql' ];
+    /**
+     * @brief Map of driver names to lists of scripts to excecute
+     *
+     * The key `*` represents any drivers not explicitely listed.
+     */
+    public const SCRIPT_FILE_LISTS = [ '*' => [ 'install.sql' ] ];
 
     private $dbAccessor_;
 
@@ -29,7 +35,22 @@ abstract class AbstractFileBasedInstaller implements InstallerInterface
 
     public function install()
     {
-        foreach (static::SCRIPT_FILES as $file) {
+        $files = static::SCRIPT_FILE_LISTS[$this->dbAccessor_->getDriverName()]
+            ?? static::SCRIPT_FILE_LISTS['*']
+            ?? null;
+
+        if (!isset($files)) {
+            /** @throw alcamo::exception::Unsupported if no installation files
+             *  exist for the chosen driver. */
+            throw (new Unsupported())->setMessageContext(
+                [
+                    'feature' => 'installation with '
+                        . $this->dbAccessor_->getDriverName() . ' driver'
+                ]
+            );
+        }
+
+        foreach ($files as $file) {
             $this->dbAccessor_->executeSqlFile(
                 static::SCRIPT_DIR . DIRECTORY_SEPARATOR . $file
             );

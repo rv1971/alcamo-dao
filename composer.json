@@ -4,7 +4,8 @@
     "keywords": [ "dao", "database" ],
     "license": "Apache-2.0",
     "require": {
-        "php": "7.3 - 8.5"
+        "php": "7.3 - 8.5",
+        "alcamo/exception": "^0.1"
     },
     "autoload": {
 	"psr-4": {

@@ -7,9 +7,12 @@ use PHPUnit\Framework\TestCase;
 class MyInstaller extends AbstractFileBasedInstaller
 {
     public const SCRIPT_DIR = __DIR__;
+
+    public const SCRIPT_FILE_LISTS = [
+        '*' => [ 'sqlite-install.sql' ]
+    ];
 }
 
-/* This also tests class AbstractFileBasedInstaller. */
 class DbAccessorTest extends TestCase
 {
     public const SELECT_STMT = "SELECT * FROM my_foo";
@@ -18,13 +21,19 @@ class DbAccessorTest extends TestCase
 
     public function testBasics()
     {
-        $accessor = DbAccessor::newFromProps(
-            [ 'dsn' => static::DSN, 'tablePrefix' => 'my_' ]
+        $dbAccessor = DbAccessor::newFromProps(
+            [ 'dsn' => static::DSN, 'namePrefix' => 'my_' ]
         );
 
-        (new MyInstaller($accessor))->install();
+        $this->assertSame('sqlite', $dbAccessor->getDriverName());
 
-        $stmt = $accessor->prepare(static::SELECT_STMT);
+        $this->assertFalse($dbAccessor->relationExists('foo'));
+
+        (new MyInstaller($dbAccessor))->install();
+
+        $this->assertTrue($dbAccessor->relationExists('foo'));
+
+        $stmt = $dbAccessor->prepare(static::SELECT_STMT);
 
         $this->assertInstanceof(Statement::class, $stmt);
 
@@ -39,11 +48,14 @@ class DbAccessorTest extends TestCase
 
     public function testException()
     {
-        $accessor = DbAccessor::newFromDsn(static::DSN);
+        $dbAccessor = DbAccessor::newFromDsn(static::DSN);
 
         $this->expectException(\PDOException::class);
-        $this->expectExceptionMessage('HY000');
 
-        $accessor->prepare('select * from bar');
+        $this->expectExceptionMessage(
+            'SQLSTATE[HY000]: General error: 1 no such table: bar'
+        );
+
+        $dbAccessor->prepare('select * from bar');
     }
 }

@@ -3,14 +3,14 @@
 namespace alcamo\dao;
 
 /**
- * @brief Table accessor with iterator over all table records
+ * @brief Relation accessor with iterator over all relation records
  *
  * @warning No sanitization takes place on method arguments. The caller must
  * have done sanitization before, if necessary.
  *
  * @date last reviewed 2026-06-25
  */
-class TableAccessor implements \Countable, \IteratorAggregate
+class RelationAccessor implements \Countable, \IteratorAggregate
 {
     /// Class to return when fetching records
     public const FETCH_CLASS = \StdClass::class;
@@ -26,22 +26,23 @@ class TableAccessor implements \Countable, \IteratorAggregate
      * @brief Create from named properties
      *
      * @param $props array|object Properties with the names as the parameters
-     * of alcamo::dao::DbAccessor::newFromDsn() plus a `tableName` property.
+     * of alcamo::dao::DbAccessor::newFromDsn() plus a `relationName` property.
      */
     public static function newFromProps($props): self
     {
         $props = (object)$props;
 
-        return new static(DbAccessor::newFromProps($props), $props->tableName);
+        return
+            new static(DbAccessor::newFromProps($props), $props->relationName);
     }
 
     protected $dbAccessor_;
-    protected $tableName_;
+    protected $relationName_;
 
-    public function __construct(DbAccessor $dbAccessor, string $tableName)
+    public function __construct(DbAccessor $dbAccessor, string $relationName)
     {
         $this->dbAccessor_ = $dbAccessor;
-        $this->tableName_ = $tableName;
+        $this->relationName_ = $relationName;
     }
 
     public function getDbAccessor(): DbAccessor
@@ -49,9 +50,9 @@ class TableAccessor implements \Countable, \IteratorAggregate
         return $this->dbAccessor_;
     }
 
-    public function getTableName(): string
+    public function getRelationName(): string
     {
-        return $this->tableName_;
+        return $this->relationName_;
     }
 
     /**
@@ -72,23 +73,24 @@ class TableAccessor implements \Countable, \IteratorAggregate
         return $stmt;
     }
 
-    /// Execute $sql with parameters $params
-    public function query(string $sql, ?array $params = null): \Traversable
+    /// Execute $querySql with parameters $params
+    public function query(string $querySql, ?array $params = null): \Traversable
     {
-        return $this->prepare($sql)->executeAndReturnSelf($params);
+        return $this->prepare($this->dbAccessor_->replaceNamePrefix($querySql))
+            ->executeAndReturnSelf($params);
     }
 
     // Count all records
     public function count(): int
     {
         return $this
-            ->query(sprintf(static::COUNT_STMT, $this->tableName_))
+            ->query(sprintf(static::COUNT_STMT, $this->relationName_))
             ->fetchColumn();
     }
 
     /// Use query() to iterate over all records
     public function getIterator(): \Traversable
     {
-        return $this->query(sprintf(static::SELECT_STMT, $this->tableName_));
+        return $this->query(sprintf(static::SELECT_STMT, $this->relationName_));
     }
 }

@@ -28,17 +28,20 @@ class DbAccessor
     /// Class to return when fetching records
     public const FETCH_CLASS = \StdClass::class;
 
+    /// Statement to test whether a relation exists
+    protected const RELATION_EXISTS_STMT = 'SELECT 1 from /*_*/%s LIMIT 1';
+
     /// Create from parameters as in PDO::__construct()
     public static function newFromDsn(
         string $dsn,
         ?string $username = null,
         ?string $password = null,
         ?array $options = null,
-        ?string $tablePrefix = null
+        ?string $namePrefix = null
     ): self {
         return new static(
             new \PDO($dsn, $username, $password, $options),
-            $tablePrefix
+            $namePrefix
         );
     }
 
@@ -47,7 +50,7 @@ class DbAccessor
      *
      * @param $props array|object Properties with the names as the parameters
      * of alcamo::dao::DbAccessor::newFromDsn() plus optionally a
-     * `tablePrefix` property.
+     * `namePrefix` property.
      */
     public static function newFromProps($props): self
     {
@@ -58,21 +61,21 @@ class DbAccessor
             $props->username ?? null,
             $props->password ?? null,
             $props->options ?? null,
-            $props->tablePrefix ?? null
+            $props->namePrefix ?? null
         );
     }
 
     protected $pdo_;         ///< PDO object
-    protected $tablePrefix_; ///< ?string
+    protected $namePrefix_; ///< ?string
 
     /**
      * @param $pdo PDO object.
      *
-     * @param $tablePrefix prefix to prepend to all table names. This allows
-     * to access tables in a specific schema and/or to use a table naming
+     * @param $namePrefix prefix to prepend to all relation names. This allows
+     * to access relations in a specific schema and/or to use a relation naming
      * convention based on prefixes.
      */
-    public function __construct(\PDO $pdo, ?string $tablePrefix = null)
+    public function __construct(\PDO $pdo, ?string $namePrefix = null)
     {
         $this->pdo_ = $pdo;
 
@@ -80,7 +83,7 @@ class DbAccessor
             $this->pdo_->setAttribute($attribute, $value);
         }
 
-        $this->tablePrefix_ = $tablePrefix;
+        $this->namePrefix_ = $namePrefix;
     }
 
     public function getPdo(): \PDO
@@ -88,9 +91,23 @@ class DbAccessor
         return $this->pdo_;
     }
 
-    public function getTablePrefix(): ?string
+    public function getNamePrefix(): ?string
     {
-        return $this->tablePrefix_;
+        return $this->namePrefix_;
+    }
+
+    public function getDriverName(): string
+    {
+        return $this->pdo_->getAttribute(\PDO::ATTR_DRIVER_NAME);
+    }
+
+    ///
+    /// @brief Replace all occurrences of `/*_*/` in $sql *verbatim* by the
+    /// name prefix, if any.
+    ///
+    public function replaceNamePrefix(string $sql): string
+    {
+        return str_replace('/*_*/', $this->namePrefix_, $sql);
     }
 
     /**
@@ -105,7 +122,7 @@ class DbAccessor
      * alcamo::dao::DbAccessor::FETCH_CLASS]
      */
     /// @note All occurrences of `/*_*/` in $stmtSql are *verbatim* replaced by
-    /// the table prefix, if any.
+    /// the relation prefix, if any.
     public function prepare(
         string $stmtSql,
         ?array $options = null,
@@ -124,7 +141,7 @@ class DbAccessor
         }
 
         $stmt = $this->pdo_->prepare(
-            str_replace('/*_*/', $this->tablePrefix_, $stmtSql),
+            $this->replaceNamePrefix($stmtSql),
             $options ?? []
         );
 
@@ -167,5 +184,29 @@ class DbAccessor
     public function executeSqlFile(string $pathname): void
     {
         $this->executeScript(file_get_contents($pathname));
+    }
+
+    /**
+     * @brief Whether a relation (table or view) $relationName exists
+     *
+     * @param $relationName Name of the relation *without prefix*.
+     */
+    public function relationExists(string $relationName): bool
+    {
+        try {
+            $this->pdo_->query(
+                $this->replaceNamePrefix(
+                    sprintf(static::RELATION_EXISTS_STMT, $relationName)
+                )
+            );
+        } catch (\PDOException $e) {
+            if ($e->getCode() == 'HY000') {
+                return false;
+            } else {
+                throw $e;
+            }
+        }
+
+        return true;
     }
 }

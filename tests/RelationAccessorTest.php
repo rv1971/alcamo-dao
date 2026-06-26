@@ -8,13 +8,13 @@ class MyClass extends \StdClass
 {
 }
 
-class MyTableAccessor extends TableAccessor
+class MyRelationAccessor extends RelationAccessor
 {
     public const FETCH_CLASS = MyClass::class;
 }
 
 /* This also tests class Statement. */
-class TableAccessorTest extends TestCase
+class RelationAccessorTest extends TestCase
 {
     public const CREATE_TABLE =
         'CREATE TABLE /*_*/foo(bar INTEGER, baz INTEGER, qux INTEGER)';
@@ -39,15 +39,15 @@ class TableAccessorTest extends TestCase
 
     public function testBasics()
     {
-        $accessor = MyTableAccessor::newFromProps(
+        $accessor = MyRelationAccessor::newFromProps(
             [
                 'dsn' => static::DSN,
-                'tableName' => 'foo',
-                'tablePrefix' => 'bar_'
+                'namePrefix' => 'bar_',
+                'relationName' => 'foo'
             ]
         );
 
-        $this->assertSame('foo', $accessor->getTableName());
+        $this->assertSame('foo', $accessor->getRelationName());
 
         $this->assertTrue(
             $accessor->prepare(static::CREATE_TABLE)->execute()
