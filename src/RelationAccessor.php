@@ -18,8 +18,11 @@ class RelationAccessor implements \Countable, \IteratorAggregate
     /// Class to return when fetching records
     public const FETCH_CLASS = \StdClass::class;
 
-    // SELECT statement for count()
-    public const COUNT_STMT = 'SELECT COUNT(*) FROM /*_*/%s';
+    /// Map of statement IDs to SQL statements with options
+    public const STMT_MAP = [
+        'count'  => [ 'SELECT COUNT(*) FROM /*_*/%s' ],
+        'select' => [ 'SELECT * FROM /*_*/%s ORDER BY 1, 2, 3 LIMIT 100' ]
+    ];
 
     /// SELECT statement for getIterator()
     public const SELECT_STMT =
@@ -44,6 +47,8 @@ class RelationAccessor implements \Countable, \IteratorAggregate
     protected $dbAccessor_;
     protected $relationName_;
 
+    private $stmtCache_ = []; ///< Map of string IDs to prepared statements
+
     public function __construct(
         DbAccessor $dbAccessor,
         ?string $relationName = null
@@ -65,20 +70,38 @@ class RelationAccessor implements \Countable, \IteratorAggregate
     /**
      * @brief Prepare an SQL statement
      *
-     * @param $stmt SQL statement string
+     * @param $stmtSql SQL statement string
      *
      * @param $options See
      * [PDO::prepare()](https://www.php.net/manual/en/pdo.prepare) $options
      */
     public function prepare(
-        string $stmt,
+        string $stmtSql,
         ?array $options = null
     ): \PDOStatement {
         $stmt = $this->dbAccessor_
-            ->prepare($stmt, $options, static::FETCH_CLASS);
+            ->prepare($stmtSql, $options, static::FETCH_CLASS);
 
         return $stmt;
     }
+
+    /**
+     * @brief Get a prepared statement from the cache
+     *
+     * @param $id Key in alcamo_dao::RelationAccessor::STMT_MAP.
+     */
+    public function getStmt(string $id): \PDOStatement
+    {
+        return $this->stmtCache_[$id]
+        ?? (
+            $this->stmtCache_[$id] =
+                $this->prepare(
+                    sprintf(static::STMT_MAP[$id][0], $this->relationName_),
+                    static::STMT_MAP[$id][1] ?? null
+                )
+        );
+    }
+
 
     /// Execute $querySql with parameters $params
     public function query(string $querySql, ?array $params = null): \Traversable
@@ -90,14 +113,12 @@ class RelationAccessor implements \Countable, \IteratorAggregate
     // Count all records
     public function count(): int
     {
-        return $this
-            ->query(sprintf(static::COUNT_STMT, $this->relationName_))
-            ->fetchColumn();
+        return $this->getStmt('count')->executeAndReturnSelf()->fetchColumn();
     }
 
-    /// Use query() to iterate over all records
+    /// Iterate over all records
     public function getIterator(): \Traversable
     {
-        return $this->query(sprintf(static::SELECT_STMT, $this->relationName_));
+        return $this->getStmt('select')->executeAndReturnSelf();
     }
 }
