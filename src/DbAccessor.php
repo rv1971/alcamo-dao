@@ -137,9 +137,21 @@ class DbAccessor
         return $stmt;
     }
 
-    /// Execute a sequence of SQL statements as strings
-    public function executeScript(iterable $stmtSqls): void
+    /**
+     * @brief Execute a sequence of SQL statements as strings
+     *
+     * @param $stmtSqls string|array Statements to execute.
+     *
+     * @warning The parser for string $stmtSqls is extremely trivial and
+     * simply assumes that the statements are exactly the chunks of text that
+     * terminate in semicolon and linefeed.
+     */
+    public function executeScript($stmtSqls): void
     {
+        if (!is_iterable($stmtSqls)) {
+            $stmtSqls = explode(";\n", $stmtSqls);
+        }
+
         foreach ($stmtSqls as $stmtSql) {
             $stmt = $this->prepare($stmtSql);
 
@@ -151,13 +163,9 @@ class DbAccessor
 
     /**
      * @brief Execute an SQL file
-     *
-     * @warning The parser is extremely trivial and simply assumes that the
-     * statements are exactly the chunks of text that terminate in semicolon
-     * and linefeed.
      */
     public function executeSqlFile(string $pathname): void
     {
-        $this->executeScript(explode(";\n", file_get_contents($pathname)));
+        $this->executeScript(file_get_contents($pathname));
     }
 }
